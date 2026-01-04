@@ -43,7 +43,7 @@
        
         async function loadTasks() {
             try {
-                const res = await fetch("https://my-project-myqi.onrender.com");
+                const res = await fetch("https://my-project-myqi.onrender.com/tasks");
                 if (!res.ok) throw new Error("Failed to fetch tasks");
 
                 const tasks = await res.json();
