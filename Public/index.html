@@ -40,9 +40,10 @@
 
     <script>
         // Load tasks from backend
+       
         async function loadTasks() {
             try {
-                const res = await fetch("http://localhost:3000/tasks");
+                const res = await fetch("https://my-project-myqi.onrender.com/");
                 if (!res.ok) throw new Error("Failed to fetch tasks");
 
                 const tasks = await res.json();
@@ -96,7 +97,7 @@
             if (!title) return;
 
             try {
-                const res = await fetch("http://localhost:3000/tasks", {
+                const res = await fetch("https://my-project-myqi.onrender.com/tasks", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ title })
@@ -118,7 +119,7 @@
                 const taskId = parseInt(id, 10);
                 if (isNaN(taskId)) return;
 
-                const res = await fetch(`http://localhost:3000/tasks/${taskId}`, {
+                const res = await fetch(`https://my-project-myqi.onrender.com/tasks/${taskId}`, {
                     method: "DELETE"
                 });
 
@@ -136,7 +137,7 @@
         // Update task (title or completed)
         async function updateTask(id, data) {
             try {
-                const res = await fetch(`http://localhost:3000/tasks/${id}`, {
+                const res = await fetch(`https://my-project-myqi.onrender.com/tasks/${id}`, {
                     method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(data)
