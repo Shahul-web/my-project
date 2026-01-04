@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Todo Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+
+        input[type="text"] {
+            width: 200px;
+        }
+
+        button {
+            margin-left: 8px;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            color: gray;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Todo Dashboard</h1>
+
+    <input id="taskInput" placeholder="Add a task">
+    <button onclick="addTask()">Add</button>
+
+    <ol id="taskList"></ol>
+
+    <script>
+        // Load tasks from backend
+        async function loadTasks() {
+            try {
+                const res = await fetch("http://localhost:3000/tasks");
+                if (!res.ok) throw new Error("Failed to fetch tasks");
+
+                const tasks = await res.json();
+
+                const taskList = tasks.map(t => `
+                <li id="task-${t.id}" class="${t.completed ? "completed" : ""}">
+                    <input type="checkbox" ${t.completed ? "checked" : ""} data-id="${t.id}" class="complete-checkbox">
+                    <input type="text" value="${t.title}" data-id="${t.id}" class="title-input">
+                    <button data-id="${t.id}" class="delete-btn">Delete</button>
+                </li>
+                        `).join("");
+
+                document.getElementById("taskList").innerHTML = taskList;
+
+                // Checkbox → toggle completed
+                document.querySelectorAll(".complete-checkbox").forEach(cb => {
+                    cb.addEventListener("change", () => {
+                        const id = parseInt(cb.dataset.id, 10);
+                        updateTask(id, { completed: cb.checked ? 1 : 0 });
+                        // Toggle line-through instantly
+                        const li = document.getElementById(`task-${id}`);
+                        if (cb.checked) li.classList.add("completed");
+                        else li.classList.remove("completed");
+                    });
+                });
+
+                // Title input → update on blur
+                document.querySelectorAll(".title-input").forEach(input => {
+                    input.addEventListener("blur", () => {
+                        const id = parseInt(input.dataset.id, 10);
+                        const newTitle = input.value.trim();
+                        if (newTitle) updateTask(id, { title: newTitle });
+                    });
+                });
+
+                // Delete button
+                document.querySelectorAll(".delete-btn").forEach(btn => {
+                    btn.addEventListener("click", () => deleteTask(btn.dataset.id));
+                });
+
+            } catch (err) {
+                console.error("Error loading tasks:", err);
+                alert("Could not load tasks.");
+            }
+        }
+
+        // Add new task
+        async function addTask() {
+            const input = document.getElementById("taskInput");
+            const title = input.value.trim();
+            if (!title) return;
+
+            try {
+                const res = await fetch("http://localhost:3000/tasks", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title })
+                });
+
+                if (!res.ok) throw new Error("Failed to add task");
+
+                input.value = "";
+                loadTasks();
+            } catch (err) {
+                console.error("Error adding task:", err);
+                alert("Could not add task.");
+            }
+        }
+
+        // Delete task
+        async function deleteTask(id) {
+            try {
+                const taskId = parseInt(id, 10);
+                if (isNaN(taskId)) return;
+
+                const res = await fetch(`http://localhost:3000/tasks/${taskId}`, {
+                    method: "DELETE"
+                });
+
+                if (res.status === 404) alert("Task not found.");
+                else if (!res.ok) throw new Error("Failed to delete task");
+
+                const li = document.getElementById(`task-${taskId}`);
+                if (li) li.remove();
+            } catch (err) {
+                console.error("Error deleting task:", err);
+                alert("Could not delete task.");
+            }
+        }
+
+        // Update task (title or completed)
+        async function updateTask(id, data) {
+            try {
+                const res = await fetch(`http://localhost:3000/tasks/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                if (res.status === 404) alert("Task not found.");
+                else if (!res.ok) throw new Error("Failed to update task");
+            } catch (err) {
+                console.error("Error updating task:", err);
+                alert("Could not update task.");
+            }
+        }
+
+        // Initial load
+        loadTasks();
+    </script>
+</body>
+
+</html>
